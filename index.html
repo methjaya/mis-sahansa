@@ -1,0 +1,1528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Model Guess from Sahansa – MGT 6302 MIS</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&family=Roboto+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --red: #C0002A;
+    --red-dark: #8B0020;
+    --red-light: #e8002e;
+    --red-pale: #fff0f3;
+    --white: #ffffff;
+    --off-white: #fafafa;
+    --gray-100: #f5f5f5;
+    --gray-200: #e8e8e8;
+    --gray-400: #999;
+    --gray-700: #333;
+    --black: #111;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--off-white);
+    color: var(--black);
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  /* ─── MODAL OVERLAY ─── */
+  #modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.75);
+    z-index: 9999;
+    display: flex; align-items: center; justify-content: center;
+    padding: 1rem;
+    backdrop-filter: blur(4px);
+  }
+  #modal-box {
+    background: var(--white);
+    border-top: 6px solid var(--red);
+    border-radius: 4px;
+    max-width: 560px;
+    width: 100%;
+    padding: 2.5rem 2.5rem 2rem;
+    position: relative;
+    animation: modalIn .4s cubic-bezier(.34,1.56,.64,1);
+  }
+  @keyframes modalIn {
+    from { opacity: 0; transform: translateY(-30px) scale(.95); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  #modal-box .modal-icon {
+    font-size: 2.8rem; line-height: 1; margin-bottom: .75rem;
+  }
+  #modal-box h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem;
+    color: var(--red);
+    margin-bottom: .75rem;
+  }
+  #modal-box p {
+    font-size: .93rem;
+    color: var(--gray-700);
+    margin-bottom: .6rem;
+    line-height: 1.65;
+  }
+  #modal-box p strong { color: var(--red); }
+  #modal-box .modal-sig {
+    margin-top: 1.2rem;
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    color: var(--red-dark);
+    font-size: .9rem;
+  }
+  #modal-close {
+    display: block;
+    margin-top: 1.6rem;
+    background: var(--red);
+    color: var(--white);
+    border: none;
+    padding: .75rem 2rem;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 600;
+    font-size: .95rem;
+    letter-spacing: .04em;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: background .2s;
+    width: 100%;
+  }
+  #modal-close:hover { background: var(--red-dark); }
+
+  /* ─── HEADER ─── */
+  header {
+    background: var(--red);
+    color: var(--white);
+    padding: 3rem 2rem 2.5rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  header::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      -45deg,
+      transparent,
+      transparent 18px,
+      rgba(255,255,255,.04) 18px,
+      rgba(255,255,255,.04) 36px
+    );
+    pointer-events: none;
+  }
+  .header-kicker {
+    font-family: 'Roboto Mono', monospace;
+    font-size: .72rem;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    opacity: .75;
+    margin-bottom: .5rem;
+  }
+  header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 5vw, 3.4rem);
+    font-weight: 900;
+    line-height: 1.15;
+    letter-spacing: -.01em;
+    text-shadow: 0 2px 10px rgba(0,0,0,.25);
+  }
+  header h1 span {
+    display: block;
+    font-size: clamp(.9rem, 2vw, 1.1rem);
+    font-weight: 300;
+    opacity: .85;
+    margin-top: .4rem;
+    font-family: 'DM Sans', sans-serif;
+    letter-spacing: .02em;
+  }
+  .header-meta {
+    margin-top: 1.2rem;
+    font-size: .8rem;
+    opacity: .7;
+    letter-spacing: .04em;
+  }
+  .header-badge {
+    display: inline-block;
+    background: rgba(255,255,255,.18);
+    border: 1px solid rgba(255,255,255,.35);
+    border-radius: 50px;
+    padding: .3rem 1rem;
+    font-size: .75rem;
+    margin-top: .8rem;
+    letter-spacing: .06em;
+    font-family: 'Roboto Mono', monospace;
+  }
+
+  /* ─── TOC / NAV ─── */
+  .toc-wrapper {
+    background: var(--red-dark);
+    padding: 1.5rem 2rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 10px rgba(0,0,0,.2);
+  }
+  .toc-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  .toc-label {
+    font-family: 'Roboto Mono', monospace;
+    font-size: .68rem;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,.6);
+    flex-shrink: 0;
+  }
+  .toc-links {
+    display: flex;
+    gap: .4rem;
+    flex-wrap: wrap;
+    list-style: none;
+  }
+  .toc-links a {
+    color: rgba(255,255,255,.85);
+    text-decoration: none;
+    font-size: .76rem;
+    font-weight: 500;
+    padding: .25rem .6rem;
+    border-radius: 2px;
+    transition: background .18s, color .18s;
+    white-space: nowrap;
+    letter-spacing: .02em;
+  }
+  .toc-links a:hover {
+    background: rgba(255,255,255,.18);
+    color: var(--white);
+  }
+
+  /* ─── MAIN CONTENT ─── */
+  main {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 5rem;
+  }
+
+  /* ─── WEEK SECTION ─── */
+  .week-section {
+    margin-bottom: 3.5rem;
+    background: var(--white);
+    border-radius: 4px;
+    border-left: 5px solid var(--red);
+    box-shadow: 0 2px 12px rgba(0,0,0,.07);
+    overflow: hidden;
+    scroll-margin-top: 80px;
+  }
+  .week-header {
+    background: var(--red);
+    color: var(--white);
+    padding: 1.1rem 1.6rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  .week-badge {
+    font-family: 'Roboto Mono', monospace;
+    font-size: .68rem;
+    letter-spacing: .14em;
+    background: rgba(255,255,255,.2);
+    border-radius: 2px;
+    padding: .2rem .6rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .week-header h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.25rem;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+  .week-body {
+    padding: 1.6rem;
+  }
+
+  /* ─── SUBSECTIONS ─── */
+  .subsection {
+    margin-bottom: 1.8rem;
+  }
+  .subsection:last-child { margin-bottom: 0; }
+  .subsection h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.05rem;
+    color: var(--red);
+    margin-bottom: .6rem;
+    padding-bottom: .3rem;
+    border-bottom: 1px solid var(--red-pale);
+  }
+  .subsection h4 {
+    font-weight: 600;
+    font-size: .88rem;
+    color: var(--gray-700);
+    margin: .8rem 0 .3rem;
+    letter-spacing: .02em;
+  }
+  .subsection p {
+    font-size: .9rem;
+    color: #444;
+    margin-bottom: .5rem;
+  }
+  .subsection ul {
+    list-style: none;
+    padding: 0;
+  }
+  .subsection ul li {
+    font-size: .88rem;
+    color: #444;
+    padding: .22rem 0 .22rem 1.2rem;
+    position: relative;
+    line-height: 1.55;
+  }
+  .subsection ul li::before {
+    content: '▸';
+    position: absolute; left: 0;
+    color: var(--red);
+    font-size: .7rem;
+    top: .32rem;
+  }
+
+  /* ─── TABLES ─── */
+  .tbl-wrap { overflow-x: auto; margin: .8rem 0 1rem; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: .83rem;
+  }
+  thead tr {
+    background: var(--red);
+    color: var(--white);
+  }
+  thead th {
+    padding: .55rem .8rem;
+    text-align: left;
+    font-weight: 600;
+    letter-spacing: .03em;
+  }
+  tbody tr:nth-child(even) { background: var(--red-pale); }
+  tbody tr:nth-child(odd) { background: var(--white); }
+  tbody td {
+    padding: .5rem .8rem;
+    color: #333;
+    border-bottom: 1px solid var(--gray-200);
+    vertical-align: top;
+  }
+  tbody tr:hover { background: #ffecf0; }
+
+  /* ─── CALLOUT BOXES ─── */
+  .callout {
+    border-left: 4px solid var(--red);
+    background: var(--red-pale);
+    padding: .7rem 1rem;
+    margin: .8rem 0;
+    border-radius: 0 3px 3px 0;
+    font-size: .87rem;
+  }
+  .callout.tip {
+    border-color: #e67e22;
+    background: #fff8f0;
+  }
+  .callout strong {
+    color: var(--red);
+    display: block;
+    font-size: .75rem;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    margin-bottom: .25rem;
+  }
+  .callout.tip strong { color: #c0620a; }
+
+  /* ─── FORMULA/CODE CHIPS ─── */
+  .formula {
+    background: #1a1a1a;
+    color: #f0f0f0;
+    font-family: 'Roboto Mono', monospace;
+    font-size: .8rem;
+    padding: .6rem 1rem;
+    border-radius: 3px;
+    margin: .5rem 0;
+    overflow-x: auto;
+  }
+
+  /* ─── GRID OF PILLS ─── */
+  .pill-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    margin-top: .6rem;
+  }
+  .pill {
+    background: var(--red);
+    color: var(--white);
+    font-size: .75rem;
+    font-weight: 600;
+    padding: .28rem .75rem;
+    border-radius: 50px;
+    letter-spacing: .03em;
+  }
+  .pill.outline {
+    background: transparent;
+    border: 1.5px solid var(--red);
+    color: var(--red);
+  }
+
+  /* ─── SCROLL BUTTONS ─── */
+  .scroll-btns {
+    position: fixed;
+    right: 1.4rem;
+    bottom: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+    z-index: 500;
+  }
+  .scroll-btn {
+    width: 44px; height: 44px;
+    background: var(--red);
+    color: var(--white);
+    border: none;
+    border-radius: 50%;
+    font-size: 1.1rem;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 3px 14px rgba(192,0,42,.45);
+    transition: background .2s, transform .2s;
+    line-height: 1;
+  }
+  .scroll-btn:hover {
+    background: var(--red-dark);
+    transform: scale(1.1);
+  }
+
+  /* ─── FOOTER ─── */
+  footer {
+    text-align: center;
+    padding: 2.5rem 1rem;
+    background: var(--red);
+    color: rgba(255,255,255,.75);
+    font-size: .8rem;
+  }
+  footer strong { color: var(--white); }
+
+  /* ─── KEYWORD HIGHLIGHT ─── */
+  .kw {
+    color: var(--red);
+    font-weight: 600;
+  }
+
+  /* ─── RESPONSIVE ─── */
+  @media (max-width: 600px) {
+    .toc-wrapper { padding: .8rem 1rem; }
+    .toc-links a { font-size: .7rem; padding: .2rem .45rem; }
+    .week-body { padding: 1.1rem; }
+    header { padding: 2rem 1rem 1.8rem; }
+    #modal-box { padding: 1.8rem 1.4rem 1.5rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ════════════ MODAL ════════════ -->
+<div id="modal-overlay">
+  <div id="modal-box">
+    <div class="modal-icon">📋</div>
+    <h2>Before You Begin — Please Read</h2>
+    <p><strong>Model Guess from Sahansa</strong> is a supportive study aid for MGT 6302 – Management Information Systems, prepared with reference to multiple resources aligned with the weekly lecture titles.</p>
+    <p><strong>⚠️ These topics are NOT guaranteed to appear in the examination.</strong> This is not a primary source of study material. Do not rely solely on this guide.</p>
+    <p>Use this as a <strong>supplement</strong> alongside your lecture notes, textbooks, and other official course materials. Study smart — not just hard.</p>
+    <p class="modal-sig">— Prepared by Sahansa, for himself and to whom it may concern 🎓</p>
+    <button id="modal-close">I Understand — Let Me Study!</button>
+  </div>
+</div>
+
+<!-- ════════════ HEADER ════════════ -->
+<header id="top">
+  <div class="header-kicker">MGT 6302 · Faculty of Management · University of Peradeniya · 2024/25</div>
+  <h1>
+    Model Guess from Sahansa
+    <span>Management Information Systems — Comprehensive Exam Study Notes</span>
+  </h1>
+  <div class="header-meta">Sem III · Lecturers: Mr. A.M.A.S.M. Bandara &nbsp;|&nbsp; Dr. Ruwan Nawarathna &nbsp;|&nbsp; Mr. R.L. Weragama</div>
+  <div class="header-badge">⚠️ Supportive Material Only — Not a Primary Source</div>
+</header>
+
+<!-- ════════════ TOC NAV ════════════ -->
+<div class="toc-wrapper">
+  <div class="toc-inner">
+    <span class="toc-label">Jump to</span>
+    <ul class="toc-links">
+      <li><a href="#w1">Wk 1 – Intro to MIS</a></li>
+      <li><a href="#w2">Wk 2 – Systems Theory</a></li>
+      <li><a href="#w3">Wk 3 – Industry 4.0</a></li>
+      <li><a href="#w4">Wk 3-4 – Smart Products</a></li>
+      <li><a href="#w5">Wk 5 – E-Commerce</a></li>
+      <li><a href="#w6">Wk 6 – KMS & AI</a></li>
+      <li><a href="#w7">Wk 7 – Decision Making</a></li>
+      <li><a href="#w11">Wk 11 – Data Management</a></li>
+      <li><a href="#w12">Wk 12 – DBMS Intro</a></li>
+      <li><a href="#w13">Wk 13 – DBMS Apps</a></li>
+      <li><a href="#w14">Wk 14 – Security & Ethics</a></li>
+      <li><a href="#w15">Wk 15 – Digitalization</a></li>
+      <li><a href="#appendix">Appendix</a></li>
+    </ul>
+  </div>
+</div>
+
+<!-- ════════════ MAIN ════════════ -->
+<main>
+
+  <!-- ─── WEEK 1 ─── -->
+  <section class="week-section" id="w1">
+    <div class="week-header">
+      <span class="week-badge">WEEK 1</span>
+      <h2>Introduction to Management Information Systems</h2>
+    </div>
+    <div class="week-body">
+
+      <div class="subsection">
+        <h3>What is MIS?</h3>
+        <p><span class="kw">MIS</span> are organisational systems that leverage technology, human resources, and processes to systematically collect, process, store, and distribute information to support decision-making and control.</p>
+        <div class="callout"><strong>Key Definition</strong>MIS = Technology + Human Resources + Processes → Collect → Process → Store → Distribute Information</div>
+      </div>
+
+      <div class="subsection">
+        <h3>Historical Evolution of MIS</h3>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Era</th><th>Development</th></tr></thead>
+            <tbody>
+              <tr><td>1940s–1950s</td><td>Early data processing using punch card systems</td></tr>
+              <tr><td>1960s</td><td>Mainframe computers revolutionise data management</td></tr>
+              <tr><td>1970s</td><td>Introduction of Database Management Systems (DBMS)</td></tr>
+              <tr><td>1980s</td><td>Personal Computers, client-server architecture</td></tr>
+              <tr><td>1990s</td><td>ERP systems (SAP), relational databases, Internet impact</td></tr>
+              <tr><td>2000s</td><td>Cloud computing, mobile technologies, e-commerce rise</td></tr>
+              <tr><td>Present</td><td>AI, Big Data, IoT, real-time analytics</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="subsection">
+        <h3>Role of MIS in Organisations</h3>
+        <ul>
+          <li>Streamlining operations – Automation of routine tasks</li>
+          <li>Decision support systems – Relevant information for effective decision-making</li>
+          <li>Strategic planning – Aligning technology with organisational goals</li>
+          <li>Data security and integrity – Ensuring confidentiality and reliability</li>
+        </ul>
+      </div>
+
+      <div class="subsection">
+        <h3>Case Studies</h3>
+        <h4>Case 1: Enron Scandal – Ethical Failures in MIS</h4>
+        <ul>
+          <li>Enron collapsed in 2001 due to accounting fraud and manipulation of MIS data</li>
+          <li>Executives misrepresented financial health, hiding debt and inflating profits</li>
+          <li><span class="kw">Lesson:</span> Robust ethical frameworks are essential; MIS must not be misused for fraud</li>
+        </ul>
+        <h4>Case 2: Amazon – Operational Efficiency</h4>
+        <ul>
+          <li>Uses MIS for supply chain: inventory optimisation, cost reduction, delivery speed</li>
+          <li>MIS algorithms power personalised recommendations</li>
+          <li>Automation and robotics guided by MIS enhance order fulfilment</li>
+        </ul>
+        <h4>Case 3: Healthcare – Electronic Health Records (EHR)</h4>
+        <ul>
+          <li>MIS enables management of EHRs, improving accessibility and accuracy</li>
+          <li>Decision Support Systems (DSS) aid healthcare professionals</li>
+          <li>Challenges: data security, interoperability across healthcare systems</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── WEEK 2 ─── -->
+  <section class="week-section" id="w2">
+    <div class="week-header">
+      <span class="week-badge">WEEK 2</span>
+      <h2>Systems Theory & Organisational Systems</h2>
+    </div>
+    <div class="week-body">
+
+      <div class="subsection">
+        <h3>System Components</h3>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Component</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td>INPUTS</td><td>Resources, data, or materials that enter the system</td></tr>
+              <tr><td>TRANSFORMATION</td><td>Operations that convert inputs to outputs</td></tr>
+              <tr><td>OUTPUTS</td><td>Results or products of the transformation process</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="subsection">
+        <h3>Open vs. Closed Systems</h3>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Closed System</th><th>Open System</th></tr></thead>
+            <tbody>
+              <tr><td>Rigid, impenetrable boundaries</td><td>Permeable boundaries</td></tr>
+              <tr><td>Does NOT exchange info with environment</td><td>Exchanges information, energy, or material with environment</td></tr>
+              <tr><td>Mechanical systems may be closed</td><td>Biological and social systems are inherently open</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout tip"><strong>Exam Tip</strong>Organisations are OPEN systems – they interact with their environment (suppliers, customers, government, etc.)</div>
+      </div>
+
+      <div class="subsection">
+        <h3>Feedback & Loops</h3>
+        <ul>
+          <li><span class="kw">Open Loop:</span> No feedback mechanism; output does not influence input</li>
+          <li><span class="kw">Closed Loop:</span> Has feedback; output is fed back as input to adjust the system</li>
+          <li><span class="kw">Feedback:</span> Information about outputs/processes fed back as input to maintain steady state</li>
+        </ul>
+      </div>
+
+      <div class="subsection">
+        <h3>Organisational Subsystems</h3>
+        <div class="pill-grid">
+          <span class="pill">Accounting</span>
+          <span class="pill">Marketing</span>
+          <span class="pill">Human Resources</span>
+          <span class="pill">Operations</span>
+        </div>
+      </div>
+
+      <div class="subsection">
+        <h3>POLC Framework (Management Process)</h3>
+        <div class="pill-grid">
+          <span class="pill outline">Planning</span>
+          <span class="pill outline">Organising</span>
+          <span class="pill outline">Leading</span>
+          <span class="pill outline">Controlling</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── WEEK 3 ─── -->
+  <section class="week-section" id="w3">
+    <div class="week-header">
+      <span class="week-badge">WEEK 3</span>
+      <h2>Introduction to Industry 4.0 Technologies</h2>
+    </div>
+    <div class="week-body">
+
+      <div class="subsection">
+        <h3>What is Industry 4.0?</h3>
+        <p>The <span class="kw">fourth phase of the industrial revolution</span>, originating in Germany in 2011. A digital manufacturing method powered by advanced, interconnected technologies that adapt to changes to avoid failures.</p>
+      </div>
+
+      <div class="subsection">
+        <h3>The Nine Pillars of Industry 4.0</h3>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Technology</th><th>Key Role</th></tr></thead>
+            <tbody>
+              <tr><td>Cyber-Physical Systems (CPS)</td><td>Integrate processes; enable instant control, agility, efficiency</td></tr>
+              <tr><td>Internet of Things (IoT)</td><td>Connects devices/sensors; real-time tracking</td></tr>
+              <tr><td>Big Data & Analytics (BDA)</td><td>Analyse large datasets for insights, agility, sustainability</td></tr>
+              <tr><td>Cloud Computing</td><td>Virtual storage/apps; real-time access; supply chain integration</td></tr>
+              <tr><td>Autonomous Robots</td><td>Replace human labour; flexible, cooperative, independent</td></tr>
+              <tr><td>Additive Manufacturing (3D Printing)</td><td>Layer-by-layer production; reduces complexity and lead times</td></tr>
+              <tr><td>Augmented/Virtual Reality (AR/VR)</td><td>Support warehousing, training, product design</td></tr>
+              <tr><td>Simulations</td><td>Recreate real-world data virtually; optimise before physical changes</td></tr>
+              <tr><td>Cyber Security</td><td>Protect data integrity and connectivity from cyber threats</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="subsection">
+        <h3>Industry 4.0 in Sri Lanka's Apparel Industry (Sachin & Bandara, 2021)</h3>
+        <h4>Technologies Adopted</h4>
+        <div class="pill-grid">
+          <span class="pill">AR/VR</span>
+          <span class="pill">Big Data & Analytics</span>
+          <span class="pill">Cloud Computing</span>
+          <span class="pill">IoT</span>
+          <span class="pill">Robotics</span>
+        </div>
+        <h4>Barriers to Adoption</h4>
+        <ul>
+          <li><span class="kw">Financial:</span> High initial investment costs</li>
+          <li><span class="kw">Legal:</span> Regulatory barriers (e.g., RFID frequencies not approved)</li>
+          <li><span class="kw">Cultural:</span> Reluctance to store data on cloud</li>
+          <li><span class="kw">Short-term focus</span> by decision makers</li>
+        </ul>
+        <h4>Impact on Performance</h4>
+        <ul>
+          <li>Organisational: Improved efficiency, effectiveness, competitiveness</li>
+          <li>Supply Chain: Cost reduction, lead time reduction, quality improvement, information sharing</li>
+          <li>Key technologies: Big Data, Cloud Computing, IoT</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── WEEK 3-4 ─── -->
+  <section class="week-section" id="w4">
+    <div class="week-header">
+      <span class="week-badge">WEEK 3–4</span>
+      <h2>IT-Enabled Business Change: Smart, Connected Products</h2>
+    </div>
+    <div class="week-body">
+      <div class="callout tip"><strong>Source</strong>Porter &amp; Heppelmann, Harvard Business Review, October 2015</div>
+
+      <div class="subsection">
+        <h3>Core Elements of Smart, Connected Products</h3>
+        <ul>
+          <li><span class="kw">Physical:</span> Mechanical and electrical parts</li>
+          <li><span class="kw">Smart:</span> Sensors, microprocessors, data storage, software, embedded OS, digital UI</li>
+          <li><span class="kw">Connectivity:</span> Ports, antennae, protocols, networks enabling communication with the product cloud</li>
+        </ul>
+      </div>
+
+      <div class="subsection">
+        <h3>Four New Product Capabilities</h3>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Capability</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td>Monitoring</td><td>Products monitor and report own condition and environment</td></tr>
+              <tr><td>Control</td><td>Complex operations controlled remotely by users</td></tr>
+              <tr><td>Optimisation</td><td>Algorithms improve performance, utilisation, and uptime</td></tr>
+              <tr><td>Autonomy</td><td>Products learn, adapt, service themselves, operate independently</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="subsection">
+        <h3>Data Analytics Categories</h3>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Type</th><th>Function</th></tr></thead>
+            <tbody>
+              <tr><td>Descriptive</td><td>Capture products' condition, environment, and operation</td></tr>
+              <tr><td>Diagnostic</td><td>Examine causes of reduced performance or failure</td></tr>
+              <tr><td>Predictive</td><td>Detect patterns that signal impending events</td></tr>
+              <tr><td>Prescriptive</td><td>Identify measures to improve outcomes or correct problems</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="subsection">
+        <h3>Impact on Value Chain Functions</h3>
+        <ul>
+          <li><span class="kw">Product Development:</span> Shifts to interdisciplinary systems engineering; evergreen design</li>
+          <li><span class="kw">Manufacturing:</span> Smart factories; simplified components; continuous process</li>
+          <li><span class="kw">Logistics:</span> Real-time product tracking; transformed fleet management</li>
+          <li><span class="kw">Marketing & Sales:</span> Product-as-a-service (e.g., Rolls-Royce 'power-by-the-hour'); finer segmentation</li>
+          <li><span class="kw">After-Sale Service:</span> Reactive → preventive, proactive, remote service</li>
+          <li><span class="kw">Security:</span> Every connected device is a potential attack point</li>
+        </ul>
+      </div>
+
+      <div class="subsection">
+        <h3>New Organisational Structures</h3>
+        <ul>
+          <li>IT + R&D Collaboration: IT teams embedded in R&D</li>
+          <li>Unified Data Organisation: Led by a Chief Data Officer (CDO)</li>
+          <li>Dev-Ops: Cross-functional group managing post-sale performance, updates, patches</li>
+          <li>Customer Success Management: Monitors product use; ensures maximum customer value</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── WEEK 5 ─── -->
+  <section class="week-section" id="w5">
+    <div class="week-header">
+      <span class="week-badge">WEEK 5</span>
+      <h2>E-Commerce</h2>
+    </div>
+    <div class="week-body">
+
+      <div class="subsection">
+        <h3>Definition</h3>
+        <p>E-commerce refers to <span class="kw">digitally enabled commercial transactions</span> between and among organisations and individuals using the Internet and Web. It began in 1995 and has grown exponentially.</p>
+      </div>
+
+      <div class="subsection">
+        <h3>8 Unique Features of E-Commerce</h3>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>#</th><th>Feature</th><th>Description</th><th>Key Effect</th></tr></thead>
+            <tbody>
+              <tr><td>1</td><td>Ubiquity</td><td>Available everywhere, anytime via Internet</td><td>Marketplace → 'marketspace'; reduced transaction costs</td></tr>
+              <tr><td>2</td><td>Global Reach</td><td>Reaches across national boundaries</td><td>Enables e-commerce across cultures; billions of consumers</td></tr>
+              <tr><td>3</td><td>Universal Standards</td><td>One set of Internet standards</td><td>Lower market entry costs; lower consumer search costs</td></tr>
+              <tr><td>4</td><td>Richness</td><td>Supports video, audio, text</td><td>Rich messages to large numbers; integrated marketing</td></tr>
+              <tr><td>5</td><td>Interactivity</td><td>Two-way communication with users</td><td>Consumer becomes co-participant; dynamic experience</td></tr>
+              <tr><td>6</td><td>Information Density</td><td>Total quality of info for all participants</td><td>Greater price transparency; enables price discrimination</td></tr>
+              <tr><td>7</td><td>Personalisation</td><td>Targeted marketing to individuals</td><td>Personalised messages and products per individual</td></tr>
+              <tr><td>8</td><td>Social Technology</td><td>User content generation and social networking</td><td>Many-to-many mass communication; new business models</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="subsection">
+        <h3>Key Concepts in Digital Markets</h3>
+        <h4>Digital Markets Reduce:</h4>
+        <div class="pill-grid">
+          <span class="pill outline">Information Asymmetry</span>
+          <span class="pill outline">Search Costs</span>
+          <span class="pill outline">Transaction Costs</span>
+          <span class="pill outline">Menu Costs</span>
+        </div>
+        <h4>Digital Markets Enable:</h4>
+        <div class="pill-grid">
+          <span class="pill">Price Discrimination</span>
+          <span class="pill">Dynamic Pricing</span>
+          <span class="pill">Disintermediation</span>
+        </div>
+      </div>
+
+      <div class="subsection">
+        <h3>Types of E-Commerce</h3>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Type</th><th>Description</th><th>Example</th></tr></thead>
+            <tbody>
+              <tr><td>B2C</td><td>Business-to-Consumer retailing</td><td>Amazon, Daraz</td></tr>
+              <tr><td>B2B</td><td>Sales among businesses</td><td>Alibaba wholesale</td></tr>
+              <tr><td>C2C</td><td>Consumers selling to consumers</td><td>eBay, OLX</td></tr>
+              <tr><td>M-Commerce</td><td>Via wireless mobile devices</td><td>Mobile apps</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── WEEK 6 ─── -->
+  <section class="week-section" id="w6">
+    <div class="week-header">
+      <span class="week-badge">WEEK 6</span>
+      <h2>Knowledge Management Systems & AI</h2>
+    </div>
+    <div class="week-body">
+
+      <div class="subsection">
+        <h3>Types of Knowledge</h3>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Type</th><th>Description</th><th>Example</th></tr></thead>
+            <tbody>
+              <tr><td>Tacit</td><td>Experience-based, hard to codify</td><td>Leadership skills, intuition</td></tr>
+              <tr><td>Implicit</td><td>Not documented yet, but transferable</td><td>Best practices known by staff</td></tr>
+              <tr><td>Explicit</td><td>Documented and easy to share</td><td>Manuals, reports, whitepapers</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout"><strong>Key Challenge</strong>Converting tacit knowledge into explicit knowledge – organisations must balance both effectively.</div>
+      </div>
+
+      <div class="subsection">
+        <h3>Key Components of a KMS</h3>
+        <ul>
+          <li>Document Management Systems (DMS) – Centralised digital storage</li>
+          <li>Content Management Systems (CMS) – Web content control, intranet</li>
+          <li>Data Warehouses – Centralised analytics repositories (ETL)</li>
+          <li>AI, Machine Learning, LLMs, AI Agents – Automating knowledge discovery</li>
+          <li>Security & Governance – Role-based access, encryption, compliance</li>
+          <li>Visualisation Tools – Dashboards, BI tools, mind mapping</li>
+        </ul>
+      </div>
+
+      <div class="subsection">
+        <h3>Knowledge Management Process</h3>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Stage</th><th>Description</th><th>Strategies</th></tr></thead>
+            <tbody>
+              <tr><td>Creation</td><td>Identifying and documenting knowledge</td><td>Communities of Practice (CoPs), innovation labs</td></tr>
+              <tr><td>Storage</td><td>Using IT systems to retain knowledge</td><td>DMS, data warehouses, cloud storage</td></tr>
+              <tr><td>Sharing</td><td>Encouraging distribution and usage</td><td>Build a sharing culture; reward knowledge sharing</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="subsection">
+        <h3>AI-Powered KMS Layers</h3>
+        <ul>
+          <li><span class="kw">Data layer:</span> Documents, emails, ERP/CRM records, wikis</li>
+          <li><span class="kw">Processing layer:</span> ETL, cleaning, chunking, embeddings</li>
+          <li><span class="kw">Knowledge layer:</span> Vector database + metadata + graph relations</li>
+          <li><span class="kw">Intelligence layer:</span> LLM reasoning, planning, summarising, recommending</li>
+          <li><span class="kw">Application layer:</span> Chat, copilots, analytics dashboards, automation</li>
+          <li><span class="kw">Governance layer:</span> Security, permissions, auditing, compliance</li>
+        </ul>
+      </div>
+
+      <div class="subsection">
+        <h3>Popular LLMs (2025/26)</h3>
+        <div class="pill-grid">
+          <span class="pill">GPT-5 (OpenAI)</span>
+          <span class="pill">Gemini 3 (Google)</span>
+          <span class="pill">Claude 4.6 (Anthropic)</span>
+          <span class="pill">Llama 4 (Meta)</span>
+          <span class="pill">DeepSeek R1</span>
+          <span class="pill">Grok 4.1 (xAI)</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── WEEK 7 ─── -->
+  <section class="week-section" id="w7">
+    <div class="week-header">
+      <span class="week-badge">WEEK 7</span>
+      <h2>Enhancing Decision Making through AI-Powered MIS</h2>
+    </div>
+    <div class="week-body">
+
+      <div class="subsection">
+        <h3>Types of Machine Learning</h3>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Type</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td>Supervised Learning</td><td>Given training data + desired outputs (labels)</td></tr>
+              <tr><td>Unsupervised Learning</td><td>Training data without desired outputs; discovers patterns</td></tr>
+              <tr><td>Semi-Supervised Learning</td><td>Training data + a few desired outputs</td></tr>
+              <tr><td>Reinforcement Learning</td><td>Learns by interacting with environment; rewards/penalties</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="subsection">
+        <h3>ML Project Workflow</h3>
+        <ul>
+          <li>1. Understand business/domain goals</li>
+          <li>2. Data Collection (databases, logs, APIs, images)</li>
+          <li>3. Data Pre-processing and Exploratory Data Analysis (EDA)</li>
+          <li>4. Feature Engineering and Selection</li>
+          <li>5. Model Selection and Training</li>
+          <li>6. Model Evaluation and Hyperparameter Tuning</li>
+          <li>7. Model Deployment</li>
+          <li>8. Monitoring and Maintenance</li>
+        </ul>
+      </div>
+
+      <div class="subsection">
+        <h3>Model Evaluation Metrics</h3>
+        <h4>Classification Metrics</h4>
+        <div class="formula">Accuracy  = (TP + TN) / (TP + TN + FP + FN)
+Precision = TP / (TP + FP)
+Recall    = TP / (TP + FN)
+F1-Score  = 2 × (Precision × Recall) / (Precision + Recall)
+ROC-AUC  → ideal = 1.0, random = 0.5</div>
+        <h4>Regression Metrics</h4>
+        <ul>
+          <li><span class="kw">MSE</span> – Mean Squared Error; penalises large errors heavily</li>
+          <li><span class="kw">RMSE</span> – Root MSE; error in same units as target; easier to interpret</li>
+          <li><span class="kw">R²</span> – Explains variance (0 to 1; negative if worse than mean)</li>
+        </ul>
+      </div>
+
+      <div class="subsection">
+        <h3>Confusion Matrix</h3>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th></th><th>Predicted: YES</th><th>Predicted: NO</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Actual: YES</strong></td><td>TP (True Positive)</td><td>FN (False Negative)</td></tr>
+              <tr><td><strong>Actual: NO</strong></td><td>FP (False Positive)</td><td>TN (True Negative)</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="subsection">
+        <h3>AI in Logistics – Case Study Highlights</h3>
+        <ul>
+          <li><span class="kw">Transportation Management:</span> Optimises routes, predicts maintenance, reduces costs</li>
+          <li><span class="kw">Warehouse Management:</span> AI-based WMS; robotics, computer vision</li>
+          <li><span class="kw">Fleet Management:</span> Onboard monitoring, driver fatigue evaluation, real-time tracking</li>
+          <li><span class="kw">Supply Chain Visibility:</span> Real-time tracking; AI forecasts delays, prevents shortages</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── WEEK 11 ─── -->
+  <section class="week-section" id="w11">
+    <div class="week-header">
+      <span class="week-badge">WEEK 11</span>
+      <h2>Data Resource Management</h2>
+    </div>
+    <div class="week-body">
+
+      <div class="subsection">
+        <h3>Data Hierarchy</h3>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Level</th><th>Definition</th><th>Example</th></tr></thead>
+            <tbody>
+              <tr><td>Character</td><td>Single symbol – most basic logical data element</td><td>'A', '5', '@'</td></tr>
+              <tr><td>Field (Data Item)</td><td>Grouping of related characters representing an attribute</td><td>Name field, SalesAmount</td></tr>
+              <tr><td>Record</td><td>All fields describing attributes of a single entity instance</td><td>Employee record (Name, NIC, Pay Rate)</td></tr>
+              <tr><td>File (Table)</td><td>Group of related records in tabular form</td><td>Employee file, Payroll file</td></tr>
+              <tr><td>Database</td><td>Integrated collection of logically related data elements</td><td>Facebook, YouTube, Instagram</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="subsection">
+        <h3>Database Structures</h3>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Structure</th><th>Key Feature</th><th>Relationship</th></tr></thead>
+            <tbody>
+              <tr><td>Hierarchical</td><td>Tree-like, parent-child</td><td>One-to-many</td></tr>
+              <tr><td>Network</td><td>Any element related to any other</td><td>Many-to-many</td></tr>
+              <tr><td>Relational</td><td>Data in tables (rows & cols)</td><td>Many-to-many via JOIN</td></tr>
+              <tr><td>Object-Oriented</td><td>Data + operations = objects</td><td>Inheritance</td></tr>
+              <tr><td>Multidimensional</td><td>Data in cubes</td><td>Multi-dimensional (OLAP)</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="subsection">
+        <h3>Relational Database Operations</h3>
+        <ul>
+          <li><span class="kw">SELECT</span> – Create a subset of records meeting a criterion</li>
+          <li><span class="kw">JOIN</span> – Combine two or more tables to look like one big table</li>
+          <li><span class="kw">PROJECT</span> – Create a subset of columns in a table</li>
+        </ul>
+      </div>
+
+      <div class="subsection">
+        <h3>Data Warehouse & Data Mining</h3>
+        <ul>
+          <li><span class="kw">Data Warehouse:</span> Historical data from operational databases; cleaned, transformed, catalogued</li>
+          <li><span class="kw">Data Mart:</span> Subset of data warehouse focusing on a specific department</li>
+          <li><span class="kw">ETL:</span> Extract, Transform, Load – the data acquisition process</li>
+          <li><span class="kw">Data Mining:</span> Analyses data to reveal hidden patterns and trends</li>
+        </ul>
+        <h4>Data Mining Uses</h4>
+        <div class="pill-grid">
+          <span class="pill outline">Market-basket analysis</span>
+          <span class="pill outline">Root cause of quality issues</span>
+          <span class="pill outline">Customer attrition prevention</span>
+          <span class="pill outline">Cross-sell to customers</span>
+          <span class="pill outline">Customer profiling</span>
+        </div>
+      </div>
+
+      <div class="subsection">
+        <h3>Traditional File Processing vs. DBMS</h3>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Issue</th><th>File Processing</th><th>Database (DBMS)</th></tr></thead>
+            <tbody>
+              <tr><td>Data Redundancy</td><td>Data duplicated in multiple files</td><td>Consolidated into one database</td></tr>
+              <tr><td>Data Integration</td><td>Difficult to access across files</td><td>Easy integration via SQL/queries</td></tr>
+              <tr><td>Data Dependence</td><td>Files and software dependent</td><td>Data independent of application programs</td></tr>
+              <tr><td>Data Integrity</td><td>Different definitions by different apps</td><td>Standardised, consistent data</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── WEEK 12 ─── -->
+  <section class="week-section" id="w12">
+    <div class="week-header">
+      <span class="week-badge">WEEK 12</span>
+      <h2>Introduction to Database Management Systems (DBMS)</h2>
+    </div>
+    <div class="week-body">
+
+      <div class="subsection">
+        <h3>Key Definitions</h3>
+        <ul>
+          <li><span class="kw">Data:</span> Known facts that can be recorded and have an implicit meaning</li>
+          <li><span class="kw">Database:</span> A highly organised collection of assembled data</li>
+          <li><span class="kw">Mini-world:</span> Part of the real world about which data is stored</li>
+          <li><span class="kw">DBMS:</span> Software package to facilitate creation and maintenance of a computerised database</li>
+        </ul>
+      </div>
+
+      <div class="subsection">
+        <h3>Main Characteristics of the Database Approach</h3>
+        <ul>
+          <li><span class="kw">Self-describing nature:</span> DBMS catalog stores metadata</li>
+          <li><span class="kw">Program-data independence:</span> Data structures can change without changing DBMS access programs</li>
+          <li><span class="kw">Data abstraction:</span> Data model hides storage details</li>
+          <li><span class="kw">Multiple views:</span> Each user sees only data of interest</li>
+          <li><span class="kw">Multi-user transaction processing:</span> Concurrency control; OLTP</li>
+        </ul>
+      </div>
+
+      <div class="subsection">
+        <h3>Three-Schema Architecture</h3>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Schema Level</th><th>Description</th><th>Managed By</th></tr></thead>
+            <tbody>
+              <tr><td>External Schema (User View)</td><td>Individual user/application views; hides complexity</td><td>Application programs</td></tr>
+              <tr><td>Conceptual Schema (Logical View)</td><td>Overall structure: entities, attributes, relationships – blueprint</td><td>Database designers</td></tr>
+              <tr><td>Internal Schema (Physical View)</td><td>Physical storage: file organisation, indexing, data types</td><td>Database administrators</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="subsection">
+        <h3>Data Independence</h3>
+        <ul>
+          <li><span class="kw">Logical Data Independence:</span> Change conceptual schema without affecting external schemas or applications</li>
+          <li><span class="kw">Physical Data Independence:</span> Change internal schema without changing the conceptual schema</li>
+        </ul>
+      </div>
+
+      <div class="subsection">
+        <h3>ACID Properties (Transaction Processing)</h3>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Property</th><th>Meaning</th></tr></thead>
+            <tbody>
+              <tr><td>Atomicity</td><td>Transaction is all-or-nothing – indivisible unit of work</td></tr>
+              <tr><td>Consistency</td><td>Database remains in valid state before and after transaction</td></tr>
+              <tr><td>Isolation</td><td>Concurrent transactions do not interfere with each other</td></tr>
+              <tr><td>Durability</td><td>Once committed, effects are permanent – survive system failures</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="subsection">
+        <h3>DBMS Languages</h3>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Language</th><th>Purpose</th></tr></thead>
+            <tbody>
+              <tr><td>DDL (Data Definition Language)</td><td>Define database structure, data types, constraints</td></tr>
+              <tr><td>DML (Data Manipulation Language)</td><td>Retrieve and update data</td></tr>
+              <tr><td>SQL (Structured Query Language)</td><td>International standard; set-oriented; declarative</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="subsection">
+        <h3>Client-Server Architectures</h3>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Architecture</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td>Centralized</td><td>All processing in single system; users connect via remote terminals</td></tr>
+              <tr><td>Two-Tier</td><td>Client + DBMS server; ODBC/JDBC interfaces</td></tr>
+              <tr><td>Three-Tier</td><td>Client + Application/Web server (business logic) + Database server; enhanced security</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── WEEK 13 ─── -->
+  <section class="week-section" id="w13">
+    <div class="week-header">
+      <span class="week-badge">WEEK 13</span>
+      <h2>Applications of Database Management Systems</h2>
+    </div>
+    <div class="week-body">
+
+      <div class="subsection">
+        <h3>E-Commerce and Online Retail Applications</h3>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Application</th><th>How DBMS is Used</th></tr></thead>
+            <tbody>
+              <tr><td>Inventory Management</td><td>Real-time stock tracking; automatic updates; low stock alerts (Amazon, Shopify)</td></tr>
+              <tr><td>Order Processing & Tracking</td><td>Store order info, shipping addresses, order status (Etsy, Zalando)</td></tr>
+              <tr><td>Customer Data Management</td><td>Profiles, purchase history, preferences, loyalty points (ASOS, Sephora)</td></tr>
+              <tr><td>Pricing & Promotions</td><td>Dynamic pricing, promotional details (Walmart, Best Buy)</td></tr>
+              <tr><td>CRM Systems</td><td>Contact management, sales tracking, interaction history (Salesforce, HubSpot)</td></tr>
+              <tr><td>Recommendation Engines</td><td>Personalised suggestions (Netflix, Amazon, Spotify, YouTube, Airbnb)</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="subsection">
+        <h3>Financial Systems & Banking</h3>
+        <ul>
+          <li><span class="kw">Core Banking Systems:</span> Customer, account, and transaction management (Temenos T24)</li>
+          <li><span class="kw">Fraud Detection:</span> ML algorithms analyse patterns to flag suspicious transactions (PayPal)</li>
+          <li><span class="kw">Regulatory Compliance:</span> AML/KYC reports (Bank of America)</li>
+        </ul>
+      </div>
+
+      <div class="subsection">
+        <h3>Supply Chain Management (SCM) Applications</h3>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>System</th><th>Role of DBMS</th></tr></thead>
+            <tbody>
+              <tr><td>ERP Systems</td><td>Integrate supply chain, finance, manufacturing, sales</td></tr>
+              <tr><td>WMS (Warehouse Management)</td><td>Inventory tracking, order picking, shipping; real-time visibility</td></tr>
+              <tr><td>TMS (Transportation Management)</td><td>Carrier selection, route planning, shipment tracking</td></tr>
+              <tr><td>SRM (Supplier Relationship Management)</td><td>Supplier data, performance metrics, contracts</td></tr>
+              <tr><td>Demand Planning Tools</td><td>Historical sales data; statistical models for demand forecasts</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="subsection">
+        <h3>OLAP & Business Intelligence</h3>
+        <ul>
+          <li><span class="kw">OLAP:</span> Technology for analysing data in a multidimensional manner (time, geography, product)</li>
+          <li><span class="kw">KPIs:</span> Measure organisational performance</li>
+          <li><span class="kw">Dashboards:</span> Visual, consolidated views of KPIs and metrics for real-time monitoring</li>
+        </ul>
+      </div>
+
+      <div class="subsection">
+        <h3>Emerging Applications</h3>
+        <div class="pill-grid">
+          <span class="pill">IoT & Sensor Data</span>
+          <span class="pill">Blockchain</span>
+          <span class="pill">Geospatial Databases</span>
+          <span class="pill">Social Media Platforms</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── WEEK 14 ─── -->
+  <section class="week-section" id="w14">
+    <div class="week-header">
+      <span class="week-badge">WEEK 14</span>
+      <h2>Security & Ethical Challenges of IT and E-Business</h2>
+    </div>
+    <div class="week-body">
+
+      <div class="subsection">
+        <h3>Key Definitions</h3>
+        <ul>
+          <li><span class="kw">Cyber Security:</span> Protection of information systems, data, and services from unauthorised access, harm, or misuse</li>
+          <li><span class="kw">Cybercrime:</span> Use of a computer as an instrument to further illegal ends</li>
+        </ul>
+      </div>
+
+      <div class="subsection">
+        <h3>Social Engineering Attacks</h3>
+        <h4>Steps of an SE Attack</h4>
+        <ul>
+          <li>1. <span class="kw">Preparation</span> – Gather info about victims via social media, email</li>
+          <li>2. <span class="kw">Infiltration</span> – Approach victim impersonating a trustworthy source</li>
+          <li>3. <span class="kw">Exploitation</span> – Use persuasion to request account logins, payment info</li>
+          <li>4. <span class="kw">Disengagement</span> – Stop communication, commit attack, and depart</li>
+        </ul>
+        <h4>Human Tendencies Exploited</h4>
+        <div class="pill-grid">
+          <span class="pill outline">Authority</span>
+          <span class="pill outline">Liking</span>
+          <span class="pill outline">Reciprocation</span>
+          <span class="pill outline">Consistency</span>
+          <span class="pill outline">Social Validation</span>
+          <span class="pill outline">Scarcity</span>
+        </div>
+      </div>
+
+      <div class="subsection">
+        <h3>Types of Malware</h3>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Type</th><th>Description</th><th>Example</th></tr></thead>
+            <tbody>
+              <tr><td>Adware</td><td>Displays unwanted advertising; may redirect searches or steal data</td><td>Fireball</td></tr>
+              <tr><td>Spyware</td><td>Monitors activity; steals financial data and logins</td><td>CoolWebSearch</td></tr>
+              <tr><td>Ransomware</td><td>Locks system/data until ransom paid (often cryptocurrency)</td><td>CryptoLocker, Phobos</td></tr>
+              <tr><td>Worms</td><td>Replicates across networks; spreads fast; delivers payloads</td><td>SQL Slammer</td></tr>
+              <tr><td>Trojans</td><td>Disguises as legitimate software; doorway for hackers</td><td>Qbot, TrickBot</td></tr>
+              <tr><td>Viruses</td><td>Code inserted into applications; spreads via files/email</td><td>Stuxnet</td></tr>
+              <tr><td>Keyloggers</td><td>Monitors/records keystrokes; steals passwords and banking info</td><td>DarkHotel</td></tr>
+              <tr><td>Botnets</td><td>Network of infected 'zombie' computers; used for DDoS, spam</td><td>Mirai, Andromeda</td></tr>
+              <tr><td>Fileless Malware</td><td>Operates in memory only; no file footprint; hard to detect</td><td>Frodo</td></tr>
+              <tr><td>Logic Bombs</td><td>Activates on a specific trigger (date, log-on number)</td><td>South Korea 2013</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="subsection">
+        <h3>Types of Identity Theft</h3>
+        <div class="pill-grid">
+          <span class="pill">Financial</span>
+          <span class="pill">Social Security</span>
+          <span class="pill">Medical</span>
+          <span class="pill">Synthetic</span>
+          <span class="pill">Child</span>
+          <span class="pill">Tax</span>
+          <span class="pill">Criminal</span>
+        </div>
+      </div>
+
+      <div class="subsection">
+        <h3>Insider Threats</h3>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Type</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td>Malicious Insiders</td><td>Purposely misuse access to steal data or sabotage systems</td></tr>
+              <tr><td>Negligent Insiders</td><td>No malicious intent; compromise security by falling for phishing</td></tr>
+              <tr><td>Compromised Insiders</td><td>External actors coerce or bribe them to provide access</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="subsection">
+        <h3>Security Best Practices</h3>
+        <ul>
+          <li><span class="kw">Network Security:</span> Firewalls, IDPS, network segmentation, regular patching</li>
+          <li><span class="kw">Access Controls:</span> Strong authentication (MFA, biometrics); principle of least privilege</li>
+          <li><span class="kw">Encryption:</span> Data at rest and in transit; SSL/TLS</li>
+          <li><span class="kw">Secure Coding:</span> OWASP Top Ten; code reviews; penetration testing</li>
+          <li><span class="kw">Incident Response:</span> Documented plan; drills; post-incident analysis</li>
+          <li><span class="kw">Security Awareness Training:</span> Regular training on phishing and social engineering</li>
+        </ul>
+      </div>
+
+      <div class="subsection">
+        <h3>Ethical Considerations in E-Business</h3>
+        <ul>
+          <li>Privacy and Data Usage – Transparent policies; informed consent</li>
+          <li>Responsible Data Collection – Collect only necessary data; handle securely</li>
+          <li>Ethical Online Marketing – No deceptive advertising</li>
+          <li>User Profiling – Inform users; provide opt-out options</li>
+          <li>E-Business Fraud – ML detection systems for payment fraud, account hijacking</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── WEEK 15 ─── -->
+  <section class="week-section" id="w15">
+    <div class="week-header">
+      <span class="week-badge">WEEK 15</span>
+      <h2>New Trends in Digitalization</h2>
+    </div>
+    <div class="week-body">
+
+      <div class="subsection">
+        <h3>3-Stage Journey Towards Digital Maturity</h3>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Stage</th><th>Name</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td>Stage 1</td><td>Digitization</td><td>Converting analogue/physical data to digital formats (e.g., paper records to digital files)</td></tr>
+              <tr><td>Stage 2</td><td>Digitalization</td><td>Leveraging digital tech to transform business processes</td></tr>
+              <tr><td>Stage 3</td><td>Digital Transformation</td><td>Fundamental rethinking of business model using digital technology</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="subsection">
+        <h3>Internet of Things (IoT)</h3>
+        <h4>Key Elements</h4>
+        <div class="pill-grid">
+          <span class="pill outline">Devices & Sensors</span>
+          <span class="pill outline">Connectivity</span>
+          <span class="pill outline">Data Analytics</span>
+          <span class="pill outline">Applications & Services</span>
+        </div>
+        <h4>IoT Applications</h4>
+        <ul>
+          <li><span class="kw">Smart Home:</span> Amazon Echo, Google Nest, smart thermostats</li>
+          <li><span class="kw">Wearables:</span> Fitness trackers, smartwatches, health monitors</li>
+          <li><span class="kw">Industrial IoT:</span> Predictive maintenance, asset tracking</li>
+          <li><span class="kw">Connected Cars:</span> Vehicle diagnostics, GPS, driver assistance</li>
+          <li><span class="kw">Smart Grids:</span> Energy monitoring, renewable integration</li>
+          <li><span class="kw">Healthcare:</span> Remote patient monitoring, smart medical devices</li>
+        </ul>
+      </div>
+
+      <div class="subsection">
+        <h3>Cloud Computing Models</h3>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Model</th><th>Description</th><th>Key Benefit</th></tr></thead>
+            <tbody>
+              <tr><td>Cloud Computing</td><td>On-demand shared computing resources over Internet</td><td>Scalability, cost efficiency, global accessibility</td></tr>
+              <tr><td>Fog Computing</td><td>Extends cloud to edge of network</td><td>Reduced latency, real-time analytics</td></tr>
+              <tr><td>Dew Computing</td><td>Extreme edge; near the data source; localised</td><td>Ultra-low latency, enhanced data privacy</td></tr>
+              <tr><td>Mist Computing</td><td>Small fog nodes at extreme edge</td><td>Lower latency, scalability, mobility support</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="subsection">
+        <h3>5G Technology</h3>
+        <ul>
+          <li><span class="kw">eMBB</span> (Enhanced Mobile Broadband) – Very high data speeds</li>
+          <li><span class="kw">mMTC</span> (Massive Machine-Type Communications) – Connects huge numbers of IoT devices</li>
+          <li><span class="kw">URLLC</span> (Ultra-Reliable Low Latency Communications) – Critical for autonomous vehicles and telemedicine</li>
+        </ul>
+      </div>
+
+      <div class="subsection">
+        <h3>Blockchain Technology</h3>
+        <h4>Key Features</h4>
+        <div class="pill-grid">
+          <span class="pill">Security & Transparency</span>
+          <span class="pill">Immutability</span>
+          <span class="pill">Decentralisation</span>
+          <span class="pill">Smart Contracts</span>
+        </div>
+        <h4>Use Cases</h4>
+        <ul>
+          <li>Cryptocurrency: Bitcoin (BTC), Ethereum (ETH), Stablecoins</li>
+          <li>Supply Chain Management: End-to-end transparency and traceability</li>
+          <li>Healthcare: Secure medical records; clinical trial integrity</li>
+          <li>Voting Systems: Tamper-proof election records</li>
+          <li>Intellectual Property: Copyright protection for digital assets</li>
+        </ul>
+      </div>
+
+      <div class="subsection">
+        <h3>Digital Economy</h3>
+        <ul>
+          <li>Global digital economy estimated at <span class="kw">$94.6 trillion</span> by 2025</li>
+          <li>Long-term ROI for digital technologies is <span class="kw">6.7 times</span> that of non-digital investments (Oxford Economics)</li>
+          <li><span class="kw">Digital Natives:</span> Individuals who grew up in a digital environment, comfortable with technology</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── APPENDIX ─── -->
+  <section class="week-section" id="appendix">
+    <div class="week-header">
+      <span class="week-badge">APPENDIX</span>
+      <h2>Quick Reference – Key Terms</h2>
+    </div>
+    <div class="week-body">
+      <div class="subsection">
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Term</th><th>Definition</th></tr></thead>
+            <tbody>
+              <tr><td>MIS</td><td>Management Information Systems – leveraging tech, human resources, processes to collect, process, store, distribute information</td></tr>
+              <tr><td>DSS</td><td>Decision Support System – provides info for effective managerial decision-making</td></tr>
+              <tr><td>ERP</td><td>Enterprise Resource Planning – integrates core business processes (SAP, Oracle)</td></tr>
+              <tr><td>DBMS</td><td>Database Management System – software controlling database creation and maintenance</td></tr>
+              <tr><td>SQL</td><td>Structured Query Language – international standard for relational database queries</td></tr>
+              <tr><td>DDL</td><td>Data Definition Language – defines database structure</td></tr>
+              <tr><td>DML</td><td>Data Manipulation Language – retrieves and updates data</td></tr>
+              <tr><td>ACID</td><td>Atomicity, Consistency, Isolation, Durability – properties of DB transactions</td></tr>
+              <tr><td>ETL</td><td>Extract, Transform, Load – data warehouse data acquisition process</td></tr>
+              <tr><td>OLAP</td><td>Online Analytical Processing – multidimensional data analysis</td></tr>
+              <tr><td>ERD</td><td>Entity Relationship Diagram – models entities and relationships</td></tr>
+              <tr><td>DBA</td><td>Database Administrator – manages the database environment</td></tr>
+              <tr><td>CMS</td><td>Content Management System – manages digital content</td></tr>
+              <tr><td>KMS</td><td>Knowledge Management System – captures, stores, and shares knowledge</td></tr>
+              <tr><td>LLM</td><td>Large Language Model – AI trained on massive text data (ChatGPT, Claude)</td></tr>
+              <tr><td>IoT</td><td>Internet of Things – interconnected physical devices exchanging data</td></tr>
+              <tr><td>CPS</td><td>Cyber-Physical System – key Industry 4.0 pillar; integrates physical and digital</td></tr>
+              <tr><td>BDA</td><td>Big Data and Analytics – large dataset analysis for business insights</td></tr>
+              <tr><td>AR/VR</td><td>Augmented Reality / Virtual Reality – immersive technology</td></tr>
+              <tr><td>B2B/B2C/C2C</td><td>Business-to-Business / Business-to-Consumer / Consumer-to-Consumer e-commerce</td></tr>
+              <tr><td>GDPR</td><td>General Data Protection Regulation – EU data privacy regulation</td></tr>
+              <tr><td>CCPA</td><td>California Consumer Privacy Act – US data privacy regulation</td></tr>
+              <tr><td>DDoS</td><td>Distributed Denial-of-Service – attack overwhelming servers with requests</td></tr>
+              <tr><td>Phishing</td><td>Fraudulent attempt to obtain sensitive information via deceptive communication</td></tr>
+              <tr><td>Ransomware</td><td>Malware that locks systems or encrypts data until a ransom is paid</td></tr>
+              <tr><td>APT</td><td>Advanced Persistent Threat – sophisticated, prolonged cyber attack</td></tr>
+              <tr><td>5G</td><td>Fifth generation wireless technology – faster, lower latency than 4G</td></tr>
+              <tr><td>NFT</td><td>Non-Fungible Token – unique digital asset on a blockchain</td></tr>
+              <tr><td>DeFi</td><td>Decentralised Finance – financial services on blockchain without intermediaries</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ════════════ FOOTER ════════════ -->
+<footer id="bottom">
+  <strong>Model Guess from Sahansa</strong> &nbsp;·&nbsp; MGT 6302 Management Information Systems &nbsp;·&nbsp; Faculty of Management, University of Peradeniya &nbsp;·&nbsp; 2024/25 Sem III<br>
+  <br>
+  ⚠️ This is a supportive study aid only. Do not rely solely on this material. Please refer to your official course resources, lecture notes, and textbooks as your primary sources.<br>
+  <br>
+  Good luck with your examination — Study smart, not just hard. 🎓
+</footer>
+
+<!-- ════════════ SCROLL BUTTONS ════════════ -->
+<div class="scroll-btns">
+  <button class="scroll-btn" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Go to Top">▲</button>
+  <button class="scroll-btn" onclick="window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'})" title="Go to Bottom">▼</button>
+</div>
+
+<!-- ════════════ JS ════════════ -->
+<script>
+  // Modal close
+  document.getElementById('modal-close').addEventListener('click', function() {
+    const overlay = document.getElementById('modal-overlay');
+    overlay.style.transition = 'opacity .3s';
+    overlay.style.opacity = '0';
+    setTimeout(() => overlay.style.display = 'none', 300);
+  });
+
+  // Highlight active TOC link on scroll
+  const sections = document.querySelectorAll('.week-section');
+  const navLinks = document.querySelectorAll('.toc-links a');
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const id = entry.target.getAttribute('id');
+        navLinks.forEach(link => {
+          link.style.background = '';
+          link.style.color = '';
+          if (link.getAttribute('href') === '#' + id) {
+            link.style.background = 'rgba(255,255,255,.22)';
+            link.style.color = '#fff';
+          }
+        });
+      }
+    });
+  }, { rootMargin: '-80px 0px -40% 0px', threshold: 0 });
+
+  sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>
